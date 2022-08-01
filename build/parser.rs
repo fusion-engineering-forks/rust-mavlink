@@ -416,10 +416,17 @@ impl MavProfile {
 
     fn emit_mav_message_serialize(&self, enums: &Vec<Tokens>, includes: &Vec<Ident>) -> Tokens {
         quote! {
-            fn ser(&self) -> Vec<u8> {
+            fn ser_v1(&self) -> Vec<u8> {
                 match self {
-                    #(&MavMessage::#enums(ref body) => body.ser(),)*
-                    #(&MavMessage::#includes(ref msg) => msg.ser(),)*
+                    #(&MavMessage::#enums(ref body) => body.ser_v1(),)*
+                    #(&MavMessage::#includes(ref msg) => msg.ser_v2(),)*
+                }
+            }
+
+            fn ser_v2(&self) -> Vec<u8> {
+                match self {
+                    #(&MavMessage::#enums(ref body) => body.ser_v2(),)*
+                    #(&MavMessage::#includes(ref msg) => msg.ser_v2(),)*
                 }
             }
         }
@@ -601,7 +608,20 @@ impl MavMessage {
         quote!(#desc)
     }
 
-    fn emit_serialize_vars(&self) -> Tokens {
+    fn emit_serialize_vars_v1(&self) -> Tokens {
+        let ser_vars = self
+            .fields
+            .iter()
+            .map(|f| f.rust_writer())
+            .collect::<Vec<Tokens>>();
+        quote! {
+            let mut _tmp = Vec::new();
+            #(#ser_vars)*
+            _tmp
+        }
+    }
+
+    fn emit_serialize_vars_v2(&self) -> Tokens {
         let ser_vars = self
             .fields
             .iter()
@@ -615,7 +635,7 @@ impl MavMessage {
             _tmp
         }
     }
-
+    
     fn emit_deserialize_vars(&self) -> Tokens {
         let deser_vars = self
             .fields
@@ -657,7 +677,9 @@ impl MavMessage {
         let (name_types, msg_encoded_len) = self.emit_name_types();
 
         let deser_vars = self.emit_deserialize_vars();
-        let serialize_vars = self.emit_serialize_vars();
+        
+        let serialize_vars_v1 = self.emit_serialize_vars_v1();
+        let serialize_vars_v2 = self.emit_serialize_vars_v2();
 
         #[cfg(feature = "emit-description")]
         let description = self.emit_description();
@@ -680,8 +702,12 @@ impl MavMessage {
                     #deser_vars
                 }
 
-                pub fn ser(&self) -> Vec<u8> {
-                    #serialize_vars
+                pub fn ser_v1(&self) -> Vec<u8> {
+                    #serialize_vars_v1
+                }
+                
+                pub fn ser_v2(&self) -> Vec<u8> {
+                    #serialize_vars_v2
                 }
             }
         }

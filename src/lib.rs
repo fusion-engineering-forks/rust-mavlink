@@ -71,7 +71,8 @@ where
 {
     fn message_id(&self) -> u32;
     fn message_name(&self) -> &'static str;
-    fn ser(&self) -> Vec<u8>;
+    fn ser_v1(&self) -> Vec<u8>;
+    fn ser_v2(&self) -> Vec<u8>;
 
     fn parse(
         version: MavlinkVersion,
@@ -154,14 +155,16 @@ impl<M: Message> MavFrame<M> {
             MavlinkVersion::V2 => {
                 let bytes: [u8; 4] = self.msg.message_id().to_le_bytes();
                 v.extend_from_slice(&bytes);
+                // serialize message
+                v.append(&mut self.msg.ser_v2());
             }
             MavlinkVersion::V1 => {
                 v.push(self.msg.message_id() as u8); //TODO check
+                // serialize message
+                v.append(&mut self.msg.ser_v1());
+
             }
         }
-
-        // serialize message
-        v.append(&mut self.msg.ser());
 
         v
     }
@@ -451,7 +454,7 @@ pub fn write_v2_msg<M: Message, W: Write>(
     data: &M,
 ) -> Result<usize, error::MessageWriteError> {
     let msgid = data.message_id();
-    let payload = data.ser();
+    let payload = data.ser_v2();
     //    println!("write payload_len : {}", payload.len());
 
     let header = &[
@@ -497,7 +500,7 @@ pub fn write_v1_msg<M: Message, W: Write>(
     data: &M,
 ) -> Result<usize, error::MessageWriteError> {
     let msgid = data.message_id();
-    let payload = data.ser();
+    let payload = data.ser_v1();
 
     let header = &[
         MAV_STX,
