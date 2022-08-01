@@ -8,7 +8,7 @@ use xml::reader::{EventReader, XmlEvent};
 
 use quote::{Ident, Tokens};
 
-use crate::util::to_module_name;
+use crate::util::{to_module_name, q_remove_trailing_zeroes};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -607,9 +607,11 @@ impl MavMessage {
             .iter()
             .map(|f| f.rust_writer())
             .collect::<Vec<Tokens>>();
+        let trim = q_remove_trailing_zeroes(Ident::from("_tmp"));
         quote! {
             let mut _tmp = Vec::new();
             #(#ser_vars)*
+            #trim
             _tmp
         }
     }
@@ -768,7 +770,7 @@ impl MavField {
         }
         let name = Ident::from(name);
         let buf = Ident::from("_tmp");
-        self.mavtype.rust_writer(name, buf)
+        self.mavtype.rust_writer(name, buf.clone())
     }
 
     /// Emit reader
@@ -852,7 +854,7 @@ impl MavType {
             "int16_t" => Some(Int16),
             "int32_t" => Some(Int32),
             "int64_t" => Some(Int64),
-            "char" => Some(Char),
+            "char" => Some(UInt8),
             "float" => Some(Float),
             "Double" => Some(Double),
             "double" => Some(Double),
@@ -873,7 +875,7 @@ impl MavType {
     pub fn rust_reader(&self, val: Ident, buf: Ident) -> Tokens {
         use self::MavType::*;
         match self.clone() {
-            Char => quote! {#val = #buf.get_u8() as char;},
+            Char => quote! {#val = #buf.get_u8();},
             UInt8 => quote! {#val = #buf.get_u8();},
             UInt16 => quote! {#val = #buf.get_u16_le();},
             UInt32 => quote! {#val = #buf.get_u32_le();},
