@@ -880,7 +880,7 @@ impl MavType {
             "int16_t" => Some(Int16),
             "int32_t" => Some(Int32),
             "int64_t" => Some(Int64),
-            "char" => Some(UInt8),
+            "char" => Some(Char),
             "float" => Some(Float),
             "Double" => Some(Double),
             "double" => Some(Double),
@@ -943,7 +943,7 @@ impl MavType {
         match self.clone() {
             UInt8MavlinkVersion => quote! {#buf.put_u8(#val);},
             UInt8 => quote! {#buf.put_u8(#val);},
-            Char => quote! {#buf.put_u8(#val as u8);},
+            Char => quote! {#buf.put_u8(#val);},
             UInt16 => quote! {#buf.put_u16_le(#val);},
             UInt32 => quote! {#buf.put_u32_le(#val);},
             Int8 => quote! {#buf.put_i8(#val);},
@@ -1015,7 +1015,7 @@ impl MavType {
         match self.clone() {
             UInt8 | UInt8MavlinkVersion => "u8".into(),
             Int8 => "i8".into(),
-            Char => "char".into(),
+            Char => "u8".into(),
             UInt16 => "u16".into(),
             Int16 => "i16".into(),
             UInt32 => "u32".into(),
