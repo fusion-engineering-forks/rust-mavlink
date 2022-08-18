@@ -419,7 +419,7 @@ impl MavProfile {
             fn ser_v1(&self) -> Vec<u8> {
                 match self {
                     #(&MavMessage::#enums(ref body) => body.ser_v1(),)*
-                    #(&MavMessage::#includes(ref msg) => msg.ser_v2(),)*
+                    #(&MavMessage::#includes(ref msg) => msg.ser_v1(),)*
                 }
             }
 
