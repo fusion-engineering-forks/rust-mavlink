@@ -454,7 +454,7 @@ impl MavEnum {
         self.entries
             .iter()
             .map(|enum_entry| {
-                let name = format_ident!("{}", enum_entry.name.clone());
+                let name = format_ident!("{}", enum_entry.name);
                 let value;
 
                 #[cfg(feature = "emit-description")]
@@ -623,13 +623,13 @@ impl MavMessage {
         }
     }
 
-    fn emit_serialize_vars_v2(&self) -> Tokens {
+    fn emit_serialize_vars_v2(&self) -> TokenStream {
         let ser_vars = self
             .fields
             .iter()
             .map(|f| f.rust_writer())
             .collect::<Vec<TokenStream>>();
-        let trim = q_remove_trailing_zeroes(Ident::from("_tmp"));
+        let trim = q_remove_trailing_zeroes(format_ident!("_tmp"));
         quote! {
             let mut _tmp = Vec::new();
             #(#ser_vars)*
@@ -1337,9 +1337,8 @@ pub fn parse_profile(file: &mut dyn BufRead) -> MavProfile {
                                     ).unwrap();
                                 },
                                 b"value" => {
-                                    entry.name = String::from_utf8(
-                                        attr.value.to_vec()
-                                    ).unwrap();
+                                    let s = std::str::from_utf8(&attr.value).unwrap();
+                                    entry.value = Some(s.parse().unwrap());
                                 }
                                 _ => (),
                             }
