@@ -1301,9 +1301,8 @@ pub fn parse_profile(file: &mut dyn BufRead) -> MavProfile {
                                     ).unwrap();
                                 },
                                 b"value" => {
-                                    entry.name = String::from_utf8(
-                                        attr.value.to_vec()
-                                    ).unwrap();
+                                    let s = std::str::from_utf8(&attr.value).unwrap();
+                                    entry.value = Some(s.parse().unwrap());
                                 }
                                 _ => (),
                             }
