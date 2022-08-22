@@ -160,6 +160,7 @@ impl<M: Message> MavFrame<M> {
             }
             MavlinkVersion::V1 => {
                 v.push(self.msg.message_id() as u8); //TODO check
+
                 // serialize message
                 v.append(&mut self.msg.ser_v1());
             }

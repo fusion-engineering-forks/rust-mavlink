@@ -8,7 +8,7 @@ use xml::reader::{EventReader, XmlEvent};
 
 use quote::{Ident, Tokens};
 
-use crate::util::{to_module_name, q_remove_trailing_zeroes};
+use crate::util::{q_remove_trailing_zeroes, to_module_name};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
