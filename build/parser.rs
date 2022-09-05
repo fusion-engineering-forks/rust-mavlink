@@ -1,5 +1,5 @@
 use crc_any::CRCu16;
-use std::cmp::Ordering;
+use std::cmp::Reverse;
 use std::default::Default;
 use std::io::{Read, Write, BufReader, BufRead};
 use std::u32;
@@ -1044,12 +1044,6 @@ impl MavType {
             }
         }
     }
-
-    /// Compare two MavTypes
-    pub fn compare(&self, other: &Self) -> Ordering {
-        let len = self.order_len();
-        (-(len as isize)).cmp(&(-(other.order_len() as isize)))
-    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -1412,7 +1406,7 @@ pub fn parse_profile(file: &mut dyn BufRead) -> MavProfile {
                         extension_fields.retain(|field| field.is_extension);
 
                         // Only not mavlink 1 fields need to be sorted
-                        not_extension_fields.sort_by(|a, b| a.mavtype.compare(&b.mavtype));
+                        not_extension_fields.sort_by_key(|e| Reverse(e.mavtype.order_len()));
 
                         // Update msg fields and add the new message
                         let mut msg = message.clone();
@@ -1472,7 +1466,7 @@ pub fn extra_crc(msg: &MavMessage) -> u8 {
     let mut f = msg.fields.clone();
     // only mavlink 1 fields should be part of the extra_crc
     f.retain(|f| !f.is_extension);
-    f.sort_by(|a, b| a.mavtype.compare(&b.mavtype));
+    f.sort_by_key(|e| Reverse(e.mavtype.order_len()));
     for field in &f {
         crc.digest(field.mavtype.primitive_type().as_bytes());
         crc.digest(" ".as_bytes());
